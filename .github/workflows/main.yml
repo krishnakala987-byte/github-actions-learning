@@ -1,4 +1,4 @@
-name: My First GitHub Actions
+name: CI/CD Pipeline
 
 on: [push]
 
@@ -6,22 +6,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9]
-
     steps:
     - uses: actions/checkout@v3
 
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.8'
 
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest
+      run: pip install pytest
 
     - name: Run tests
       run: pytest src
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t ${{ secrets.DOCKER_USERNAME }}/my-app .
+
+    - name: Push Docker image
+      run: docker push ${{ secrets.DOCKER_USERNAME }}/my-app
